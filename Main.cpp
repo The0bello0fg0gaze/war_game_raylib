@@ -1,42 +1,59 @@
 #include <iostream>
-#include <vector>
-#include "windows.h"
+#include <fstream>
 #include "raylib.h"
-#include "gui.h"
-int main(){ //INT MAIN -------------------------------------------------------------->>
-    InitWindow(1200, 800, "PvP_GAME");
+#include <vector>
+using namespace std;
+int main(void)
+{
+    // Initialization
+    //--------------------------------------------------------------------------------------
+    vector<string> map;
+    ifstream Map("map.txt");
+    string temp;
+    const int screenWidth = 1000;
+    const int screenHeight = 900;
     
-    Camera2D camera = {0};
-    camera.target = (Vector2){0};
-    camera.offset = (Vector2){0};
-    camera.rotation = 0.0f; 
-    camera.zoom = 1.0f;
-    
-    MAP MAP(16,16,"Map.txt");
-    MAP.SetTextMap();
-    MAP.InitMap();
-    
-    vector<Texture2D> Sprite;
-    Sprite.push_back(LoadTexture("img/SmlGrass.png"));  //0    samll grass
-    Sprite.push_back(LoadTexture("img/BigGrass.png"));  //1    big grass
-    Sprite.push_back(LoadTexture("img/Bush.png"));      //2    bush
-    Sprite.push_back(LoadTexture("img/Rock.png"));      //3    rock
-    Sprite.push_back(LoadTexture("img/Tree.png"));      //4    tree
-    Sprite.push_back(LoadTexture("img/Soilder.png"));   //5    soilder
-    Sprite.push_back(LoadTexture("img/Soilder2.png"));  //6    soilder 2
-    Sprite.push_back(LoadTexture("img/Tank.png"));      //7    tank 
-    Sprite.push_back(LoadTexture("img/Tank2.png"));     //8    tank 2
-    Sprite.push_back(LoadTexture("img/Tile.png"));      //9    Tile
-    Sprite.push_back(LoadTexture("img/Heart.png"));     //10   heart
-    SetTargetFPS(60);
-    
-    while (!WindowShouldClose()){
-        start(1200, 800, camera, MAP.map, Sprite);
+    while(std::getline(Map,temp)){
+        map.push_back(temp);
     }
-    
-    for(int i=0; i<(int)Sprite.size(); i++){
-        UnloadTexture(Sprite[i]);
+    Map.close();
+
+    InitWindow(screenWidth, screenHeight, "raylib [core] example - basic window");
+
+    SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
+    //--------------------------------------------------------------------------------------
+
+    // Main game loop
+    while (!WindowShouldClose())    // Detect window close button or ESC key
+    {
+        // Update
+        //----------------------------------------------------------------------------------
+        
+        
+        //----------------------------------------------------------------------------------
+
+        // Draw
+        //----------------------------------------------------------------------------------
+        BeginDrawing();
+
+            ClearBackground(RAYWHITE);
+            for(int i=0; i < map.size(); i++ ){
+                for(int j=0; j < int(map[i].length()); j++){
+                    if(char(map[i][j])==char(*("*"))){
+                        DrawRectangle((j*50)+100, (i*50)+100, 50, 50, BLACK);
+                    }else if((char(map[i][j])== char(*(".")))){
+                        DrawRectangle((j*50)+100, (i*50)+100, 50, 50, RED);
+                    }
+                }
+            }
+
+        EndDrawing();
+        //----------------------------------------------------------------------------------
     }
-    CloseWindow();
+
+    // De-Initialization
+    //--------------------------------------------------------------------------------------
+    CloseWindow();        // Close window and OpenGL context
+    //--------------------------------------------------------------------------------------
     return 0;
 }
