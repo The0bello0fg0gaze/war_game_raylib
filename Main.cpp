@@ -3,6 +3,31 @@
 #include "raylib.h"
 #include <vector>
 using namespace std;
+void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background, vector<string> foreground, vector<Texture2D> sheet);
+void Description(vector<string> foreground,Vector2 selected);
+void ClearForeground(vector<string> &foreground);
+void PlaceMovementIconsForeground(int x, int y, int size, vector<string> &foreground);
+
+void PlaceMovementIconsForeground(int x, int y, int size, vector<string> &foreground){
+    x = x-size;
+    y = y-size;
+    for(int i=0; i <= size*2; i++ ){
+            for(int j=0; j <= size*2; j++){
+                if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(foreground.at(x+i).at(y+j) == '0')){
+                    foreground.at(x+i).at(y+j) = '8';
+                }
+            }
+    }
+}    
+void ClearForeground(vector<string> &foreground){
+    for(int i=0; i < 14; i++ ){
+            for(int j=0; j < 16; j++){
+                if(foreground.at(i).at(j) == '8'){
+                    foreground.at(i).at(j) = '0';
+                }
+            }
+    }
+}    
 
 void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background, vector<string> foreground, vector<Texture2D> sheet){
     if(background.at(i).at(j) == 0){ // Background is being printed on screen
@@ -10,22 +35,23 @@ void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background
     }else if(background.at(i).at(j) == 1){
         DrawTexture(sheet[1], (j*multi)+add, (i*multi)+add, WHITE);
     }
-                    
-                    
-    if(foreground.at(i).at(j)-'0' == 1){ // Foreground is being printed on screen
+    
+    if(foreground.at(i).at(j) == '1'){ // Foreground is being printed on screen
         DrawTexture(sheet[2], (j*multi)+add, (i*multi)+add, WHITE);
-    }else if(foreground.at(i).at(j)-'0' == 2){
+    }else if(foreground.at(i).at(j) == '2'){
         DrawTexture(sheet[3], (j*multi)+add, (i*multi)+add, WHITE);
-    }else if(foreground.at(i).at(j)-'0' == 3){ 
+    }else if(foreground.at(i).at(j) == '3'){ 
         DrawTexture(sheet[4], (j*multi)+add, (i*multi)+add, WHITE);
-    }else if(foreground.at(i).at(j)-'0' == 4){
+    }else if(foreground.at(i).at(j) == '4'){
         DrawTexture(sheet[5], (j*multi)+add, (i*multi)+add, WHITE);
-    }else if(foreground.at(i).at(j)-'0' == 5){
+    }else if(foreground.at(i).at(j) == '5'){
         DrawTexture(sheet[6], (j*multi)+add, (i*multi)+add, WHITE);
-    }else if(foreground.at(i).at(j)-'0' == 6){
+    }else if(foreground.at(i).at(j) == '6'){
         DrawTexture(sheet[7], (j*multi)+add, (i*multi)+add, WHITE);
-    }else if(foreground.at(i).at(j)-'0' == 7){
+    }else if(foreground.at(i).at(j) == '7'){
         DrawTexture(sheet[8], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j) == '8'){
+        DrawCircle((j*multi)+add+25, (i*multi)+add+25, 5, WHITE);
     }
 }
 void Description(vector<string> foreground,Vector2 selected){ //prints the description of the tile selected
@@ -49,6 +75,7 @@ void Description(vector<string> foreground,Vector2 selected){ //prints the descr
 }
 int main(void)
 {
+    Vector2 selectedprev = {0,0};
     Vector2 selected = {0,0};
     const int screenWidth = 1000;
     const int screenHeight = 900;
@@ -129,9 +156,24 @@ int main(void)
                 temp.x = (int(temp.y-100)/50);
                 temp.y = (int(sth-100)/50);
                 if((temp.x<14)&&(temp.x>=0)&&(temp.y<16)&&(temp.y>=0)){
+                    selectedprev = selected;
                     selected =temp;
                     //cout << selected.x<< "-" << selected.y<< endl;
                 }
+            }
+            
+            if((foreground.at(selected.x).at(selected.y) == '4')||(foreground.at(selected.x).at(selected.y) == '5')){
+                ClearForeground(foreground);
+                PlaceMovementIconsForeground(selected.x,selected.y,2,foreground);
+            }else if((foreground.at(selected.x).at(selected.y) == '6')||((foreground.at(selected.x).at(selected.y) == '7'))){
+                ClearForeground(foreground);
+                PlaceMovementIconsForeground(selected.x,selected.y,4,foreground);
+            }else if((foreground.at(selected.x).at(selected.y) == '0')||((foreground.at(selected.x).at(selected.y) == '0'))){
+                ClearForeground(foreground);
+            }else if((foreground.at(selected.x).at(selected.y) == '8')){
+                ClearForeground(foreground);
+                foreground.at(selected.x).at(selected.y) = foreground.at(selectedprev.x).at(selectedprev.y);
+                foreground.at(selectedprev.x).at(selectedprev.y) = '0';
             }
         }
         
@@ -155,7 +197,7 @@ int main(void)
 
             }
             
-            
+
 
         EndDrawing();
         //----------------------------------------------------------------------------------
