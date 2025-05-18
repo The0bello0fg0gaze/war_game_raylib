@@ -3,10 +3,39 @@
 #include "raylib.h"
 #include <vector>
 using namespace std;
+
+void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background, vector<string> foreground, vector<Texture2D> sheet){
+    if(background.at(i).at(j) == 0){ // Background is being printed on screen
+        DrawTexture(sheet[0], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(background.at(i).at(j) == 1){
+        DrawTexture(sheet[1], (j*multi)+add, (i*multi)+add, WHITE);
+    }
+                    
+                    
+    if(foreground.at(i).at(j)-'0' == 1){ // Foreground is being printed on screen
+        DrawTexture(sheet[2], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j)-'0' == 2){
+        DrawTexture(sheet[3], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j)-'0' == 3){ 
+        DrawTexture(sheet[4], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j)-'0' == 4){
+        DrawTexture(sheet[5], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j)-'0' == 5){
+        DrawTexture(sheet[6], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j)-'0' == 6){
+        DrawTexture(sheet[7], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j)-'0' == 7){
+        DrawTexture(sheet[8], (j*multi)+add, (i*multi)+add, WHITE);
+    }
+}
+
 int main(void)
 {
     const int screenWidth = 1000;
     const int screenHeight = 900;
+    vector<vector<int>> background;
+    vector<string> foreground;
+    vector<Texture2D> sheet;
     
     InitWindow(screenWidth, screenHeight, "War-Game");
     
@@ -14,16 +43,44 @@ int main(void)
     //--------------------------------------------------------------------------------------
     Image Grass1 = LoadImage("img/BigGrass.png");
     Texture2D grass1 = LoadTextureFromImage(Grass1);
+    sheet.push_back(grass1);
     
     Image Grass2 = LoadImage("img/SmlGrass.png");
     Texture2D grass2 = LoadTextureFromImage(Grass2);
+    sheet.push_back(grass2);
     
-    vector<string> map;
-    ifstream Map("map.txt");
+    Image Bush = LoadImage("img/Bush.png");
+    Texture2D bush = LoadTextureFromImage(Bush);
+    sheet.push_back(bush);
+    
+    Image Rock = LoadImage("img/Rock.png");
+    Texture2D rock = LoadTextureFromImage(Rock);
+    sheet.push_back(rock);
+    
+    Image Tree = LoadImage("img/Tree.png");
+    Texture2D tree = LoadTextureFromImage(Tree);
+    sheet.push_back(tree);
+    
+    Image Soilder1 = LoadImage("img/Soilder.png");
+    Texture2D soilder1 = LoadTextureFromImage(Soilder1);
+    sheet.push_back(soilder1);
+    
+    Image Soilder2 = LoadImage("img/Soilder2.png");
+    Texture2D soilder2 = LoadTextureFromImage(Soilder2);
+    sheet.push_back(soilder2);
+    
+    Image Tank1 = LoadImage("img/Tank.png");
+    Texture2D tank1 = LoadTextureFromImage(Tank1);
+    sheet.push_back(tank1);
+    
+    Image Tank2 = LoadImage("img/Tank2.png");
+    Texture2D tank2 = LoadTextureFromImage(Tank2);
+    sheet.push_back(tank2);
+    
+    ifstream Map("foreground.txt");
     string temp;
     
-    // Making the Back Ground
-    vector<vector<int>> background;
+    // Making the Background Map
     for(int i=0; i < 14; i++ ){
         vector<int> temp;
             for(int j=0; j < 16; j++){
@@ -31,14 +88,12 @@ int main(void)
             }
         background.push_back(temp);
         }
+        
+    //Making Foreground Map    
     while(std::getline(Map,temp)){
-        map.push_back(temp);
+        foreground.push_back(temp);
     }
     Map.close();
-    
-    UnloadImage(Grass1);
-    UnloadImage(Grass2);
-
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
@@ -46,9 +101,21 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
+        Vector2 selected = {0,0};
         // Update
         //----------------------------------------------------------------------------------
-        
+        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+            Vector2 temp = GetMousePosition();
+            if(((temp.x-100)>0)&&((temp.y-100)>0)){
+                int sth = temp.x;
+                temp.x = (int(temp.y-100)/50);
+                temp.y = (int(sth-100)/50);
+                if((temp.x<14)&&(temp.x>=0)&&(temp.y<16)&&(temp.y>=0)){
+                    selected =temp;
+                    cout << selected.x<< "-" << selected.y<< endl;
+                }
+            }
+        }
         
         //----------------------------------------------------------------------------------
 
@@ -57,15 +124,18 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+            
+            //Selected tile is being shown on the screen.
+            DrawSheet(selected.x, selected.y, 0, 10, background, foreground, sheet);
+            
             for(int i=0; i < 14; i++ ){
                 for(int j=0; j < 16; j++){
-                    if(background[i][j] == 0){
-                        DrawTexture(grass1, (j*50)+100, (i*50)+100, WHITE);
-                    }else if(background[i][j] == 1){
-                        DrawTexture(grass2, (j*50)+100, (i*50)+100, WHITE);
-                    }
+                    DrawSheet(i, j, 50, 100, background, foreground, sheet);
                 }
+
             }
+            
+            
 
         EndDrawing();
         //----------------------------------------------------------------------------------
@@ -73,6 +143,18 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    // Unloading the Texture2D
+    UnloadImage(Grass1); //background 0
+    UnloadImage(Grass2); //background 1
+    
+    UnloadImage(Bush); //foreground 1
+    UnloadImage(Rock); //foreground 2
+    UnloadImage(Tree); //foreground 3
+    UnloadImage(Soilder1); //foreground 4
+    UnloadImage(Soilder2); //foreground 5
+    UnloadImage(Tank1); //foreground 6
+    UnloadImage(Tank2); //foreground 7
+    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     return 0;
