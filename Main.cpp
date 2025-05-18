@@ -28,9 +28,28 @@ void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background
         DrawTexture(sheet[8], (j*multi)+add, (i*multi)+add, WHITE);
     }
 }
-
+void Description(vector<string> foreground,Vector2 selected){ //prints the description of the tile selected
+    if(foreground.at(selected.x).at(selected.y) == '0'){
+        DrawText("Grass - Nice to walk on", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '1'){
+        DrawText("Bush - Believe me you can't see through it", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '2'){
+        DrawText("Rock - Verrry strong rock", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '3'){
+        DrawText("Tree - A verry THICK tree", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '4'){
+        DrawText("Soilder Player 1 - An unfortunate blue soule", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '5'){
+        DrawText("Soilder Player 2 - An unfortunate red soule", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '6'){
+        DrawText("Tank Player 1 - He likes it in there", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '7'){
+        DrawText("Tank Player 2 - He dosen't like it in there", 75, 25, 20, WHITE);
+    }
+}
 int main(void)
 {
+    Vector2 selected = {0,0};
     const int screenWidth = 1000;
     const int screenHeight = 900;
     vector<vector<int>> background;
@@ -41,39 +60,39 @@ int main(void)
     
     // Initialization
     //--------------------------------------------------------------------------------------
-    Image Grass1 = LoadImage("img/BigGrass.png");
+    Image Grass1 = LoadImage("img/BigGrass.png");    //1
     Texture2D grass1 = LoadTextureFromImage(Grass1);
     sheet.push_back(grass1);
     
-    Image Grass2 = LoadImage("img/SmlGrass.png");
+    Image Grass2 = LoadImage("img/SmlGrass.png");   //2
     Texture2D grass2 = LoadTextureFromImage(Grass2);
     sheet.push_back(grass2);
     
-    Image Bush = LoadImage("img/Bush.png");
+    Image Bush = LoadImage("img/Bush.png");         //3
     Texture2D bush = LoadTextureFromImage(Bush);
     sheet.push_back(bush);
     
-    Image Rock = LoadImage("img/Rock.png");
+    Image Rock = LoadImage("img/Rock.png");        //4
     Texture2D rock = LoadTextureFromImage(Rock);
     sheet.push_back(rock);
     
-    Image Tree = LoadImage("img/Tree.png");
+    Image Tree = LoadImage("img/Tree.png");        //5
     Texture2D tree = LoadTextureFromImage(Tree);
     sheet.push_back(tree);
     
-    Image Soilder1 = LoadImage("img/Soilder.png");
+    Image Soilder1 = LoadImage("img/Soilder.png"); //6
     Texture2D soilder1 = LoadTextureFromImage(Soilder1);
     sheet.push_back(soilder1);
     
-    Image Soilder2 = LoadImage("img/Soilder2.png");
+    Image Soilder2 = LoadImage("img/Soilder2.png");//7
     Texture2D soilder2 = LoadTextureFromImage(Soilder2);
     sheet.push_back(soilder2);
     
-    Image Tank1 = LoadImage("img/Tank.png");
+    Image Tank1 = LoadImage("img/Tank.png");       //8
     Texture2D tank1 = LoadTextureFromImage(Tank1);
     sheet.push_back(tank1);
     
-    Image Tank2 = LoadImage("img/Tank2.png");
+    Image Tank2 = LoadImage("img/Tank2.png");     //9
     Texture2D tank2 = LoadTextureFromImage(Tank2);
     sheet.push_back(tank2);
     
@@ -101,7 +120,6 @@ int main(void)
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
-        Vector2 selected = {0,0};
         // Update
         //----------------------------------------------------------------------------------
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
@@ -112,7 +130,7 @@ int main(void)
                 temp.y = (int(sth-100)/50);
                 if((temp.x<14)&&(temp.x>=0)&&(temp.y<16)&&(temp.y>=0)){
                     selected =temp;
-                    cout << selected.x<< "-" << selected.y<< endl;
+                    //cout << selected.x<< "-" << selected.y<< endl;
                 }
             }
         }
@@ -123,11 +141,13 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(RAYWHITE);
+            ClearBackground(BLACK);
             
             //Selected tile is being shown on the screen.
             DrawSheet(selected.x, selected.y, 0, 10, background, foreground, sheet);
+            Description(foreground, selected);
             
+            //Draw the Background and Foreground
             for(int i=0; i < 14; i++ ){
                 for(int j=0; j < 16; j++){
                     DrawSheet(i, j, 50, 100, background, foreground, sheet);
