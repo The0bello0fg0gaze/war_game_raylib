@@ -7,6 +7,18 @@ void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background
 void Description(vector<string> foreground,Vector2 selected);
 void ClearForeground(vector<string> &foreground);
 void PlaceMovementIconsForeground(int x, int y, int size, vector<string> &foreground);
+void RandomeTerrain(int x, int y, float percentage, vector<string> &foreground);
+
+void RandomeTerrain(int x, int y, int percentage, const char val, vector<string> &foreground){
+    for(int i=x; i<y; i++){
+        for(int j=0; j<16; j++){
+            int chance = GetRandomValue(0, 100);
+            if(chance <= percentage){
+                foreground.at(i).at(j) = val;
+            }
+        }
+    }
+}
 
 void PlaceMovementIconsForeground(int x, int y, int size, vector<string> &foreground){
     x = x-size;
@@ -75,10 +87,16 @@ void Description(vector<string> foreground,Vector2 selected){ //prints the descr
 }
 int main(void)
 {
+    int infantarydammageinfantary = 30;
+    int infantarydammagetank = 10;
+    int tankdammagetank = 40;
+    int tankdammageinfantary = 60;
+    int terrain = 20;
     Vector2 selectedprev = {0,0};
     Vector2 selected = {0,0};
     const int screenWidth = 1000;
     const int screenHeight = 900;
+    vector<vector<int>> animationlayer;
     vector<vector<int>> background;
     vector<string> foreground;
     vector<Texture2D> sheet;
@@ -123,9 +141,20 @@ int main(void)
     Texture2D tank2 = LoadTextureFromImage(Tank2);
     sheet.push_back(tank2);
     
+    Image Heart = LoadImage("img/Heart.png");     //9
+    Texture2D heart = LoadTextureFromImage(Heart);
+    sheet.push_back(heart);
+    
     ifstream Map("foreground.txt");
     string temp;
-    
+    //Making animation layer
+    for(int i=0; i < 14; i++ ){
+        vector<int> temp;
+            for(int j=0; j < 16; j++){
+                    temp.push_back(0);
+            }
+        animationlayer.push_back(temp);
+    }
     // Making the Background Map
     for(int i=0; i < 14; i++ ){
         vector<int> temp;
@@ -143,6 +172,11 @@ int main(void)
 
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
+    //Randome Map Tile Genrator
+    
+    RandomeTerrain(2, 12, terrain, '1', foreground); //Bush Spawn Rate
+    RandomeTerrain(2, 12, terrain, '2', foreground); //Bush Spawn Rate
+    RandomeTerrain(2, 12, terrain, '3', foreground); //Bush Spawn Rate
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -161,19 +195,49 @@ int main(void)
                     //cout << selected.x<< "-" << selected.y<< endl;
                 }
             }
-            
-            if((foreground.at(selected.x).at(selected.y) == '4')||(foreground.at(selected.x).at(selected.y) == '5')){
+            const char current = foreground.at(selected.x).at(selected.y);
+            const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
+        //------ Movement of the Tiles 
+            if((current == '4')||(current == '5')){ //infantary grid pattern
                 ClearForeground(foreground);
                 PlaceMovementIconsForeground(selected.x,selected.y,2,foreground);
-            }else if((foreground.at(selected.x).at(selected.y) == '6')||((foreground.at(selected.x).at(selected.y) == '7'))){
+            }else if((current == '6')||((current == '7'))){ //tank grid pattern
                 ClearForeground(foreground);
                 PlaceMovementIconsForeground(selected.x,selected.y,4,foreground);
-            }else if((foreground.at(selected.x).at(selected.y) == '0')||((foreground.at(selected.x).at(selected.y) == '0'))){
+            }else if((current == '0')){ // clear screen when click on ground
                 ClearForeground(foreground);
-            }else if((foreground.at(selected.x).at(selected.y) == '8')){
+            }else if((current == '8')){ // move the selected peice to new location
                 ClearForeground(foreground);
                 foreground.at(selected.x).at(selected.y) = foreground.at(selectedprev.x).at(selectedprev.y);
                 foreground.at(selectedprev.x).at(selectedprev.y) = '0';
+            }
+        //--------Hit Detector
+            if(((current == '4')||(current == '5'))&&((previous == '5')||(previous == '4'))&&((current)!=(previous))){ // inf hits  inf
+                ClearForeground(foreground);
+                int hit = GetRandomValue(0, 100);
+                if(hit <= infantarydammageinfantary){
+                    foreground.at(selected.x).at(selected.y) = 0;
+                }
+            }else if(((current == '6')||(current == '7'))&&((previous == '6')||(previous == '7'))&&((current)!=(previous))){ // inf hits  inf
+                ClearForeground(foreground);
+                int hit = GetRandomValue(0, 100);
+                if(hit <= tankdammagetank){
+                    foreground.at(selected.x).at(selected.y) = 0;
+                }
+            }else if(((current == '6')||(current == '7'))&&((previous == '5')||(previous == '4'))&&((current-2)!=(previous))){ // inf hits  inf
+                ClearForeground(foreground);
+                int hit = GetRandomValue(0, 100);
+                cout << hit << endl;
+                if(hit <= infantarydammagetank){
+                    foreground.at(selected.x).at(selected.y) = 0;
+                }
+            }else if(((current == '5')||(current == '4'))&&((previous == '6')||(previous == '7'))&&((current+2)!=(previous))){ // inf hits  inf
+                ClearForeground(foreground);
+                int hit = GetRandomValue(0, 100);
+                cout << hit << endl;
+                if(hit <= tankdammageinfantary){
+                    foreground.at(selected.x).at(selected.y) = 0;
+                }
             }
         }
         
@@ -193,6 +257,8 @@ int main(void)
             for(int i=0; i < 14; i++ ){
                 for(int j=0; j < 16; j++){
                     DrawSheet(i, j, 50, 100, background, foreground, sheet);
+                    
+                    // add animation layer here later
                 }
 
             }
