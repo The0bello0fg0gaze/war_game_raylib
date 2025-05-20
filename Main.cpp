@@ -5,8 +5,8 @@
 using namespace std;
 void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background, vector<string> foreground, vector<Texture2D> sheet);
 void Description(vector<string> foreground,Vector2 selected);
-void ClearForeground(vector<string> &foreground);
-void PlaceMovementIconsForeground(int x, int y, int size, vector<string> &foreground);
+void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationlayer);
+void PlaceMovementIconsForeground(int x, int y, int size, const char current, vector<string> &foreground, vector<vector<int>> &animationlayer);
 void RandomeTerrain(int x, int y, float percentage, vector<string> &foreground);
 
 void RandomeTerrain(int x, int y, int percentage, const char val, vector<string> &foreground){
@@ -20,22 +20,30 @@ void RandomeTerrain(int x, int y, int percentage, const char val, vector<string>
     }
 }
 
-void PlaceMovementIconsForeground(int x, int y, int size, vector<string> &foreground){
+void PlaceMovementIconsForeground(int x, int y, int size, const char current, vector<string> &foreground, vector<vector<int>> &animationlayer){
     x = x-size;
     y = y-size;
     for(int i=0; i <= size*2; i++ ){
             for(int j=0; j <= size*2; j++){
-                if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(foreground.at(x+i).at(y+j) == '0')){
-                    foreground.at(x+i).at(y+j) = '8';
+                if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)){
+                    const char temp = foreground.at(x+i).at(y+j);
+                    if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(temp == '0')){
+                        foreground.at(x+i).at(y+j) = '8';
+                    }else if((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(int(temp)-52 >= 0))&&(temp != current)&&(int(temp)-46 != int(current)-48)&&(int(temp)-50 != int(current)-48)){
+                        animationlayer.at(x+i).at(y+j) = 1;
+                    }
                 }
             }
     }
 }    
-void ClearForeground(vector<string> &foreground){
+void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationlayer){
     for(int i=0; i < 14; i++ ){
             for(int j=0; j < 16; j++){
                 if(foreground.at(i).at(j) == '8'){
                     foreground.at(i).at(j) = '0';
+                }
+                if(animationlayer.at(i).at(j) == 1){
+                    animationlayer.at(i).at(j) = 0;
                 }
             }
     }
@@ -76,13 +84,13 @@ void Description(vector<string> foreground,Vector2 selected){ //prints the descr
     }else if(foreground.at(selected.x).at(selected.y) == '3'){
         DrawText("Tree - A verry THICK tree", 75, 25, 20, WHITE);
     }else if(foreground.at(selected.x).at(selected.y) == '4'){
-        DrawText("Soilder Player 1 - An unfortunate blue soule", 75, 25, 20, WHITE);
+        DrawText("Soilder Red - An unfortunate blue soule", 75, 25, 20, WHITE);
     }else if(foreground.at(selected.x).at(selected.y) == '5'){
-        DrawText("Soilder Player 2 - An unfortunate red soule", 75, 25, 20, WHITE);
+        DrawText("Soilder Blue - An unfortunate red soule", 75, 25, 20, WHITE);
     }else if(foreground.at(selected.x).at(selected.y) == '6'){
-        DrawText("Tank Player 1 - He likes it in there", 75, 25, 20, WHITE);
+        DrawText("Tank Red - He likes it in there", 75, 25, 20, WHITE);
     }else if(foreground.at(selected.x).at(selected.y) == '7'){
-        DrawText("Tank Player 2 - He dosen't like it in there", 75, 25, 20, WHITE);
+        DrawText("Tank Blue - He dosen't like it in there", 75, 25, 20, WHITE);
     }
 }
 int main(void)
@@ -149,7 +157,7 @@ int main(void)
     string temp;
     //Making animation layer
     for(int i=0; i < 14; i++ ){
-        vector<int> temp;
+        vector<int> temp; 
             for(int j=0; j < 16; j++){
                     temp.push_back(0);
             }
@@ -195,48 +203,48 @@ int main(void)
                     //cout << selected.x<< "-" << selected.y<< endl;
                 }
             }
+            int IsInRange = animationlayer.at(selected.x).at(selected.y);
             const char current = foreground.at(selected.x).at(selected.y);
             const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
-        //------ Movement of the Tiles 
+        //Movement of the Tiles 
+        //--------------------------------------------------------------------------------- 
             if((current == '4')||(current == '5')){ //infantary grid pattern
-                ClearForeground(foreground);
-                PlaceMovementIconsForeground(selected.x,selected.y,2,foreground);
+                ClearForeground(foreground, animationlayer);
+                PlaceMovementIconsForeground(selected.x ,selected.y ,2 ,current ,foreground, animationlayer);
             }else if((current == '6')||((current == '7'))){ //tank grid pattern
-                ClearForeground(foreground);
-                PlaceMovementIconsForeground(selected.x,selected.y,4,foreground);
+                ClearForeground(foreground, animationlayer);
+                PlaceMovementIconsForeground(selected.x ,selected.y ,4 ,current ,foreground, animationlayer);
             }else if((current == '0')){ // clear screen when click on ground
-                ClearForeground(foreground);
-            }else if((current == '8')){ // move the selected peice to new location
-                ClearForeground(foreground);
+                ClearForeground(foreground, animationlayer);
+            }else if((current == '8')&&((int(previous)-52)>=0)){ // move the selected peice to new location
+                ClearForeground(foreground, animationlayer);
                 foreground.at(selected.x).at(selected.y) = foreground.at(selectedprev.x).at(selectedprev.y);
                 foreground.at(selectedprev.x).at(selectedprev.y) = '0';
             }
         //--------Hit Detector
-            if(((current == '4')||(current == '5'))&&((previous == '5')||(previous == '4'))&&((current)!=(previous))){ // inf hits  inf
-                ClearForeground(foreground);
+            if(((current == '4')||(current == '5'))&&((previous == '5')||(previous == '4'))&&((current)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+                ClearForeground(foreground, animationlayer);
                 int hit = GetRandomValue(0, 100);
                 if(hit <= infantarydammageinfantary){
-                    foreground.at(selected.x).at(selected.y) = 0;
+                    foreground.at(selected.x).at(selected.y) = '0';
                 }
-            }else if(((current == '6')||(current == '7'))&&((previous == '6')||(previous == '7'))&&((current)!=(previous))){ // inf hits  inf
-                ClearForeground(foreground);
+            }else if(((current == '6')||(current == '7'))&&((previous == '6')||(previous == '7'))&&((current)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+                ClearForeground(foreground, animationlayer);
                 int hit = GetRandomValue(0, 100);
                 if(hit <= tankdammagetank){
-                    foreground.at(selected.x).at(selected.y) = 0;
+                    foreground.at(selected.x).at(selected.y) = '0';
                 }
-            }else if(((current == '6')||(current == '7'))&&((previous == '5')||(previous == '4'))&&((current-2)!=(previous))){ // inf hits  inf
-                ClearForeground(foreground);
+            }else if(((current == '6')||(current == '7'))&&((previous == '5')||(previous == '4'))&&((current-2)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+                ClearForeground(foreground, animationlayer);
                 int hit = GetRandomValue(0, 100);
-                cout << hit << endl;
                 if(hit <= infantarydammagetank){
-                    foreground.at(selected.x).at(selected.y) = 0;
+                    foreground.at(selected.x).at(selected.y) = '0';
                 }
-            }else if(((current == '5')||(current == '4'))&&((previous == '6')||(previous == '7'))&&((current+2)!=(previous))){ // inf hits  inf
-                ClearForeground(foreground);
+            }else if(((current == '5')||(current == '4'))&&((previous == '6')||(previous == '7'))&&((current+2)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+                ClearForeground(foreground, animationlayer);
                 int hit = GetRandomValue(0, 100);
-                cout << hit << endl;
                 if(hit <= tankdammageinfantary){
-                    foreground.at(selected.x).at(selected.y) = 0;
+                    foreground.at(selected.x).at(selected.y) = '0';
                 }
             }
         }
@@ -258,7 +266,9 @@ int main(void)
                 for(int j=0; j < 16; j++){
                     DrawSheet(i, j, 50, 100, background, foreground, sheet);
                     
-                    // add animation layer here later
+                    if(animationlayer.at(i).at(j) == 1){
+                        DrawCircle((j*50)+100+25, (i*50)+100+25, 5, RED);
+                    }
                 }
 
             }
