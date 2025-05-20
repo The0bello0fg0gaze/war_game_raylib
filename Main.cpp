@@ -7,14 +7,62 @@ void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background
 void Description(vector<string> foreground,Vector2 selected);
 void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationlayer);
 void PlaceMovementIconsForeground(int x, int y, int size, const char current, vector<string> &foreground, vector<vector<int>> &animationlayer);
-void RandomeTerrain(int x, int y, float percentage, vector<string> &foreground);
+void RandomeTerrain(int x, int y, int percentage, const char val, int max, vector<string> &foreground);
+bool IsPlayerRed(const char val);
+bool IsPlayerBlue(const char val);
+bool IsHeart(const char val);
+bool IsObject(const char val);
+int WinCondition(vector<string> foreground);
 
-void RandomeTerrain(int x, int y, int percentage, const char val, vector<string> &foreground){
+int WinCondition(vector<string> foreground){
+    int countr = 0;
+    int countb = 0;
+    for(int i=0; i<14; i++){
+        for(int j=0; j<16; j++){
+            if(foreground.at(i).at(j) == 'r'){
+                countr ++;
+            }else if(foreground.at(i).at(j) == 'b'){
+                countb ++;
+            }
+        }
+    }
+    if(countr >= 3){return 1;}
+    else if(countb >= 3 ){return 0;}
+}
+
+bool IsPlayerRed(const char val){
+    if(
+        (val == '4')||
+        (val == '6')||
+        (val == 'r')
+    ){return true;}
+    else{return false;}
+}
+bool IsPlayerBlue(const char val){
+    if(
+        (val == '5')||
+        (val == '7')||
+        (val == 'b')
+    ){return true;}
+    else{return false;}
+}   
+bool IsObject(const char val){
+    if(
+        (val == '1')||
+        (val == '2')||
+        (val == '3')
+    ){return true;}
+    else{return false;}
+}
+
+void RandomeTerrain(int x, int y, int percentage, const char val, int max, vector<string> &foreground){
+    int count = 0;
     for(int i=x; i<y; i++){
         for(int j=0; j<16; j++){
             int chance = GetRandomValue(0, 100);
-            if(chance <= percentage){
+            if((chance <= percentage)&&(count <= max)&&(foreground.at(i).at(j) == '0')){
                 foreground.at(i).at(j) = val;
+                count ++;
             }
         }
     }
@@ -27,10 +75,15 @@ void PlaceMovementIconsForeground(int x, int y, int size, const char current, ve
             for(int j=0; j <= size*2; j++){
                 if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)){
                     const char temp = foreground.at(x+i).at(y+j);
+                    
                     if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(temp == '0')){
                         foreground.at(x+i).at(y+j) = '8';
-                    }else if((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(int(temp)-52 >= 0))&&(temp != current)&&(int(temp)-46 != int(current)-48)&&(int(temp)-50 != int(current)-48)){
+                        
+                    }else if((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(int(temp)-52 >= 0))&&(temp != current)&&(int(temp)-46 != int(current)-48)&&(int(temp)-50 != int(current)-48)&&(temp != '9')){ //only paint enemy red
                         animationlayer.at(x+i).at(y+j) = 1;
+                        
+                    }else if(temp == '9'){ //paint heart blue
+                        animationlayer.at(x+i).at(y+j) = 2;
                     }
                 }
             }
@@ -43,6 +96,8 @@ void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationl
                     foreground.at(i).at(j) = '0';
                 }
                 if(animationlayer.at(i).at(j) == 1){
+                    animationlayer.at(i).at(j) = 0;
+                }else if(animationlayer.at(i).at(j) == 2){
                     animationlayer.at(i).at(j) = 0;
                 }
             }
@@ -72,6 +127,12 @@ void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background
         DrawTexture(sheet[8], (j*multi)+add, (i*multi)+add, WHITE);
     }else if(foreground.at(i).at(j) == '8'){
         DrawCircle((j*multi)+add+25, (i*multi)+add+25, 5, WHITE);
+    }else if(foreground.at(i).at(j) == '9'){
+        DrawTexture(sheet[9], (j*multi)+add, (i*multi)+add-15, WHITE);
+    }else if(foreground.at(i).at(j) == 'b'){
+        DrawTexture(sheet[10], (j*multi)+add, (i*multi)+add, WHITE);
+    }else if(foreground.at(i).at(j) == 'r'){
+        DrawTexture(sheet[11], (j*multi)+add, (i*multi)+add, WHITE);
     }
 }
 void Description(vector<string> foreground,Vector2 selected){ //prints the description of the tile selected
@@ -91,10 +152,13 @@ void Description(vector<string> foreground,Vector2 selected){ //prints the descr
         DrawText("Tank Red - He likes it in there", 75, 25, 20, WHITE);
     }else if(foreground.at(selected.x).at(selected.y) == '7'){
         DrawText("Tank Blue - He dosen't like it in there", 75, 25, 20, WHITE);
+    }else if(foreground.at(selected.x).at(selected.y) == '9'){
+        DrawText("Capture all the hearts to win the game", 75, 25, 20, WHITE);
     }
 }
 int main(void)
 {
+    int turn = 0;   
     int infantarydammageinfantary = 30;
     int infantarydammagetank = 10;
     int tankdammagetank = 40;
@@ -108,50 +172,59 @@ int main(void)
     vector<vector<int>> background;
     vector<string> foreground;
     vector<Texture2D> sheet;
+    Rectangle next = {775,825,200,50};
     
     InitWindow(screenWidth, screenHeight, "War-Game");
     
     // Initialization
     //--------------------------------------------------------------------------------------
-    Image Grass1 = LoadImage("img/BigGrass.png");    //1
+    Image Grass1 = LoadImage("img/BigGrass.png");    //0
     Texture2D grass1 = LoadTextureFromImage(Grass1);
     sheet.push_back(grass1);
     
-    Image Grass2 = LoadImage("img/SmlGrass.png");   //2
+    Image Grass2 = LoadImage("img/SmlGrass.png");   //1
     Texture2D grass2 = LoadTextureFromImage(Grass2);
     sheet.push_back(grass2);
     
-    Image Bush = LoadImage("img/Bush.png");         //3
+    Image Bush = LoadImage("img/Bush.png");         //2
     Texture2D bush = LoadTextureFromImage(Bush);
     sheet.push_back(bush);
     
-    Image Rock = LoadImage("img/Rock.png");        //4
+    Image Rock = LoadImage("img/Rock.png");        //3
     Texture2D rock = LoadTextureFromImage(Rock);
     sheet.push_back(rock);
     
-    Image Tree = LoadImage("img/Tree.png");        //5
+    Image Tree = LoadImage("img/Tree.png");        //4
     Texture2D tree = LoadTextureFromImage(Tree);
     sheet.push_back(tree);
     
-    Image Soilder1 = LoadImage("img/Soilder.png"); //6
+    Image Soilder1 = LoadImage("img/Soilder.png"); //5
     Texture2D soilder1 = LoadTextureFromImage(Soilder1);
     sheet.push_back(soilder1);
     
-    Image Soilder2 = LoadImage("img/Soilder2.png");//7
+    Image Soilder2 = LoadImage("img/Soilder2.png");//6
     Texture2D soilder2 = LoadTextureFromImage(Soilder2);
     sheet.push_back(soilder2);
     
-    Image Tank1 = LoadImage("img/Tank.png");       //8
+    Image Tank1 = LoadImage("img/Tank.png");       //7
     Texture2D tank1 = LoadTextureFromImage(Tank1);
     sheet.push_back(tank1);
     
-    Image Tank2 = LoadImage("img/Tank2.png");     //9
+    Image Tank2 = LoadImage("img/Tank2.png");     //8
     Texture2D tank2 = LoadTextureFromImage(Tank2);
     sheet.push_back(tank2);
     
     Image Heart = LoadImage("img/Heart.png");     //9
     Texture2D heart = LoadTextureFromImage(Heart);
     sheet.push_back(heart);
+    
+    Image Soilder2Heart = LoadImage("img/Soilder2heart.png");     //10
+    Texture2D blueheart = LoadTextureFromImage(Soilder2Heart);
+    sheet.push_back(blueheart);
+    
+    Image SoilderHeart = LoadImage("img/Soilderheart.png");     //11
+    Texture2D redheart = LoadTextureFromImage(SoilderHeart);
+    sheet.push_back(redheart);
     
     ifstream Map("foreground.txt");
     string temp;
@@ -182,9 +255,10 @@ int main(void)
     //--------------------------------------------------------------------------------------
     //Randome Map Tile Genrator
     
-    RandomeTerrain(2, 12, terrain, '1', foreground); //Bush Spawn Rate
-    RandomeTerrain(2, 12, terrain, '2', foreground); //Bush Spawn Rate
-    RandomeTerrain(2, 12, terrain, '3', foreground); //Bush Spawn Rate
+    RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
+    RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Bush Spawn Rate
+    RandomeTerrain(2, 12, terrain, '3', 100 ,foreground); //Bush Spawn Rate
+
 
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
@@ -208,18 +282,29 @@ int main(void)
             const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
         //Movement of the Tiles 
         //--------------------------------------------------------------------------------- 
-            if((current == '4')||(current == '5')){ //infantary grid pattern
+            if((current == '4')||(current == '5')||(current == 'r')||(current == 'b')){ //infantary grid pattern
                 ClearForeground(foreground, animationlayer);
                 PlaceMovementIconsForeground(selected.x ,selected.y ,2 ,current ,foreground, animationlayer);
+                
             }else if((current == '6')||((current == '7'))){ //tank grid pattern
                 ClearForeground(foreground, animationlayer);
                 PlaceMovementIconsForeground(selected.x ,selected.y ,4 ,current ,foreground, animationlayer);
-            }else if((current == '0')){ // clear screen when click on ground
+                
+            }else if((((int(current)-48)<8))||(current == '0')){ // clear screen when click on ground
                 ClearForeground(foreground, animationlayer);
-            }else if((current == '8')&&((int(previous)-52)>=0)){ // move the selected peice to new location
+                
+            }else if(((current == '8')||(current == '9'))&&(((int(previous)-52)>=0)&&((int(previous)-48)<=8))||(previous == 'r')||(previous == 'b')){ // move the selected peice to new location
                 ClearForeground(foreground, animationlayer);
-                foreground.at(selected.x).at(selected.y) = foreground.at(selectedprev.x).at(selectedprev.y);
-                foreground.at(selectedprev.x).at(selectedprev.y) = '0';
+                if((current == '9')&&(previous == '5')){ // blue capture heart
+                    foreground.at(selected.x).at(selected.y) = 'b';
+                    foreground.at(selectedprev.x).at(selectedprev.y) = '0';
+                }else if((current == '9')&&(previous == '4')){ // read capture heart
+                    foreground.at(selected.x).at(selected.y) = 'r';
+                    foreground.at(selectedprev.x).at(selectedprev.y) = '0';
+                }else if((current == '8')){ //cannot capture by tank
+                    foreground.at(selected.x).at(selected.y) = foreground.at(selectedprev.x).at(selectedprev.y);
+                    foreground.at(selectedprev.x).at(selectedprev.y) = '0';
+                }
             }
         //--------Hit Detector
             if(((current == '4')||(current == '5'))&&((previous == '5')||(previous == '4'))&&((current)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
@@ -261,6 +346,9 @@ int main(void)
             DrawSheet(selected.x, selected.y, 0, 10, background, foreground, sheet);
             Description(foreground, selected);
             
+            DrawRectangleRounded(next, 5, 25, Color {0,90,0,255}); 
+            DrawText("PASS", next.x+60, next.y+10, 30, WHITE);
+            
             //Draw the Background and Foreground
             for(int i=0; i < 14; i++ ){
                 for(int j=0; j < 16; j++){
@@ -268,6 +356,8 @@ int main(void)
                     
                     if(animationlayer.at(i).at(j) == 1){
                         DrawCircle((j*50)+100+25, (i*50)+100+25, 5, RED);
+                    }if(animationlayer.at(i).at(j) == 2){
+                        DrawCircle((j*50)+100+25, (i*50)+100+25, 5, BLUE);
                     }
                 }
 
@@ -292,6 +382,9 @@ int main(void)
     UnloadImage(Soilder2); //foreground 5
     UnloadImage(Tank1); //foreground 6
     UnloadImage(Tank2); //foreground 7
+    UnloadImage(Heart); //foreground 9
+    UnloadImage(Soilder2Heart); //foreground 14
+    UnloadImage(SoilderHeart); //foreground 15
     
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
