@@ -12,7 +12,27 @@ bool IsPlayerRed(const char val);
 bool IsPlayerBlue(const char val);
 bool IsHeart(const char val);
 bool IsObject(const char val);
-int WinCondition(vector<string> foreground);
+bool IsTank(const char val);
+bool IsInfantary(const char val);
+int WinCondition(vector<string> foreground);  
+
+bool IsTank(const char val){
+    if(
+        (val == '6')||
+        (val == '7')
+    ){return true;}
+    else{return false;}
+}
+
+bool IsInfantary(const char val){
+    if(
+        (val == '4')||
+        (val == '5')||
+        (val == 'b')||
+        (val == 'r')
+    ){return true;}
+    else{return false;}
+}   
 
 int WinCondition(vector<string> foreground){
     int countr = 0;
@@ -28,6 +48,7 @@ int WinCondition(vector<string> foreground){
     }
     if(countr >= 3){return 1;}
     else if(countb >= 3 ){return 0;}
+    return -1;
 }
 
 bool IsPlayerRed(const char val){
@@ -79,7 +100,7 @@ void PlaceMovementIconsForeground(int x, int y, int size, const char current, ve
                     if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(temp == '0')){
                         foreground.at(x+i).at(y+j) = '8';
                         
-                    }else if((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(int(temp)-52 >= 0))&&(temp != current)&&(int(temp)-46 != int(current)-48)&&(int(temp)-50 != int(current)-48)&&(temp != '9')){ //only paint enemy red
+                    }else if(((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(!IsObject(temp)))&&(IsPlayerRed(temp) != IsPlayerRed(current)))&&(temp != '9')){ //only paint enemy red
                         animationlayer.at(x+i).at(y+j) = 1;
                         
                     }else if(temp == '9'){ //paint heart blue
@@ -157,7 +178,9 @@ void Description(vector<string> foreground,Vector2 selected){ //prints the descr
     }
 }
 int main(void)
-{
+{   
+    bool mouse = true;
+    int ActionPoint = 8;
     int turn = 0;   
     int infantarydammageinfantary = 30;
     int infantarydammagetank = 10;
@@ -265,7 +288,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+        if((IsMouseButtonPressed(MOUSE_BUTTON_LEFT))&&(mouse)){
             Vector2 temp = GetMousePosition();
             if(((temp.x-100)>0)&&((temp.y-100)>0)){
                 int sth = temp.x;
@@ -282,60 +305,84 @@ int main(void)
             const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
         //Movement of the Tiles 
         //--------------------------------------------------------------------------------- 
-            if((current == '4')||(current == '5')||(current == 'r')||(current == 'b')){ //infantary grid pattern
+            if(IsInfantary(current)){ //infantary grid pattern
                 ClearForeground(foreground, animationlayer);
                 PlaceMovementIconsForeground(selected.x ,selected.y ,2 ,current ,foreground, animationlayer);
                 
-            }else if((current == '6')||((current == '7'))){ //tank grid pattern
+            }else if(IsTank(current)){ //tank grid pattern
                 ClearForeground(foreground, animationlayer);
                 PlaceMovementIconsForeground(selected.x ,selected.y ,4 ,current ,foreground, animationlayer);
                 
-            }else if((((int(current)-48)<8))||(current == '0')){ // clear screen when click on ground
+            }else if((IsObject(current))||(current == '0')){ // clear screen when click on ground
                 ClearForeground(foreground, animationlayer);
                 
-            }else if(((current == '8')||(current == '9'))&&(((int(previous)-52)>=0)&&((int(previous)-48)<=8))||(previous == 'r')||(previous == 'b')){ // move the selected peice to new location
+            }else if(((current == '8')||(current == '9'))&&(!IsObject(current))){ // move the selected peice to new location
                 ClearForeground(foreground, animationlayer);
+                
                 if((current == '9')&&(previous == '5')){ // blue capture heart
+                    ActionPoint --;
                     foreground.at(selected.x).at(selected.y) = 'b';
                     foreground.at(selectedprev.x).at(selectedprev.y) = '0';
+                    
                 }else if((current == '9')&&(previous == '4')){ // read capture heart
+                    ActionPoint --;
                     foreground.at(selected.x).at(selected.y) = 'r';
                     foreground.at(selectedprev.x).at(selectedprev.y) = '0';
-                }else if((current == '8')){ //cannot capture by tank
+                    
+                }else if((current == '8')){ //Normal Movements
+                    ActionPoint --;
                     foreground.at(selected.x).at(selected.y) = foreground.at(selectedprev.x).at(selectedprev.y);
                     foreground.at(selectedprev.x).at(selectedprev.y) = '0';
                 }
             }
         //--------Hit Detector
-            if(((current == '4')||(current == '5'))&&((previous == '5')||(previous == '4'))&&((current)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+            if((IsPlayerRed(current) != IsPlayerRed(previous))&&(IsInRange == 1)&&(IsInfantary(current)&&(IsInfantary(previous)))){ // inf hits  inf
                 ClearForeground(foreground, animationlayer);
+                ActionPoint --;
                 int hit = GetRandomValue(0, 100);
                 if(hit <= infantarydammageinfantary){
-                    foreground.at(selected.x).at(selected.y) = '0';
+                    if((current == 'r')||(current == 'b')){
+                        foreground.at(selected.x).at(selected.y) = '9';
+                    }else{
+                        foreground.at(selected.x).at(selected.y) = '0';
+                    }
                 }
-            }else if(((current == '6')||(current == '7'))&&((previous == '6')||(previous == '7'))&&((current)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+            }else if((IsPlayerRed(current) != IsPlayerRed(previous))&&(IsInRange == 1)&&(IsTank(current)&&(IsTank(previous)))){ // inf hits  inf
                 ClearForeground(foreground, animationlayer);
+                ActionPoint --;
                 int hit = GetRandomValue(0, 100);
                 if(hit <= tankdammagetank){
                     foreground.at(selected.x).at(selected.y) = '0';
                 }
-            }else if(((current == '6')||(current == '7'))&&((previous == '5')||(previous == '4'))&&((current-2)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+            }else if((IsPlayerRed(current) != IsPlayerRed(previous))&&(IsInRange == 1)&&(IsTank(current)&&(IsInfantary(previous)))){ // inf hits  inf
                 ClearForeground(foreground, animationlayer);
+                ActionPoint --;
                 int hit = GetRandomValue(0, 100);
                 if(hit <= infantarydammagetank){
                     foreground.at(selected.x).at(selected.y) = '0';
                 }
-            }else if(((current == '5')||(current == '4'))&&((previous == '6')||(previous == '7'))&&((current+2)!=(previous))&&(IsInRange == 1)){ // inf hits  inf
+            }else if((IsPlayerRed(current) != IsPlayerRed(previous))&&(IsInRange == 1)&&(IsInfantary(current)&&(IsTank(previous)))){ // inf hits  inf
                 ClearForeground(foreground, animationlayer);
+                ActionPoint --;
                 int hit = GetRandomValue(0, 100);
                 if(hit <= tankdammageinfantary){
-                    foreground.at(selected.x).at(selected.y) = '0';
+                    if((current == 'r')||(current == 'b')){
+                        foreground.at(selected.x).at(selected.y) = '9';
+                    }else{
+                        foreground.at(selected.x).at(selected.y) = '0';
+                    }
                 }
             }
         }
         
         //----------------------------------------------------------------------------------
-
+        if (CheckCollisionPointRec(GetMousePosition(), next))
+        {
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                turn ++;
+                ActionPoint = 8;
+            }
+        }
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -346,8 +393,16 @@ int main(void)
             DrawSheet(selected.x, selected.y, 0, 10, background, foreground, sheet);
             Description(foreground, selected);
             
-            DrawRectangleRounded(next, 5, 25, Color {0,90,0,255}); 
-            DrawText("PASS", next.x+60, next.y+10, 30, WHITE);
+            DrawRectangleRounded(next, 0.5, 25, WHITE); 
+            DrawText("PASS", next.x+60, next.y+10, 30, BLACK);
+            DrawText(TextFormat("Turn Number :- %i", turn), next.x-450, next.y+10, 30, WHITE);
+            DrawText(TextFormat("Action Points Left :- %i", ActionPoint), next.x-250, 50, 30, WHITE);
+            
+            if(turn%2 == 0){
+                DrawText("RED", next.x-700, next.y+10, 30, RED);
+            }else{
+                DrawText("BLUE", next.x-700, next.y+10, 30, BLUE);
+            }
             
             //Draw the Background and Foreground
             for(int i=0; i < 14; i++ ){
