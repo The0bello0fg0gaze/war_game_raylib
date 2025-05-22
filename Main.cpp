@@ -43,9 +43,11 @@ bool IsInfantary(const char val){
     else{return false;}
 }   
 
-int WinCondition(vector<string> foreground){
+int WinCondition(vector<string> foreground){ // 1 for red win 0 for blue win -1 for draw
     int countr = 0;
     int countb = 0;
+    int r = 0;
+    int b = 0;
     for(int i=0; i<14; i++){
         for(int j=0; j<16; j++){
             if(foreground.at(i).at(j) == 'r'){
@@ -53,10 +55,12 @@ int WinCondition(vector<string> foreground){
             }else if(foreground.at(i).at(j) == 'b'){
                 countb ++;
             }
+            if(IsPlayerBlue(foreground.at(i).at(j))) b++;
+            else if(IsPlayerRed(foreground.at(i).at(j))) r++;
         }
     }
-    if(countr >= 3){return 1;}
-    else if(countb >= 3 ){return 0;}
+    if((countr >= 3)||(b == 0)){return 1;} //red wins
+    else if((countb >= 3 )||(r == 0)){return 0;} // blue wins
     return -1;
 }
 
@@ -188,7 +192,8 @@ void Description(vector<string> foreground,Vector2 selected){ //prints the descr
 }
 int main(void)
 {   
-    bool mouse = true;
+    int win = -1;
+    int screen = 1;
     int ActionPoint = 8;
     int turn = 1;   
     int infantarydammageinfantary = 30;
@@ -204,7 +209,9 @@ int main(void)
     vector<vector<int>> background;
     vector<string> foreground;
     vector<Texture2D> sheet;
-    Rectangle next = {775,825,200,50};
+    Rectangle nextbutton = {775,825,200,50};
+    Rectangle startbutton = {400,400,200,50};
+    Rectangle exitbutton = {400,500,200,50};
     
     InitWindow(screenWidth, screenHeight, "War-Game");
     
@@ -258,8 +265,13 @@ int main(void)
     Texture2D redheart = LoadTextureFromImage(SoilderHeart);
     sheet.push_back(redheart);
     
-    ifstream Map("foreground.txt");
-    string temp;
+    //Making Foreground Map
+                ifstream Map("foreground.txt");
+                string temp;       
+                while(std::getline(Map,temp)){
+                    foreground.push_back(temp);
+                }
+                Map.close();
     //Making animation layer
     for(int i=0; i < 14; i++ ){
         vector<int> temp; 
@@ -275,23 +287,11 @@ int main(void)
                     temp.push_back((i+j)%2);
             }
         background.push_back(temp);
-        }
-        
-    //Making Foreground Map    
-    while(std::getline(Map,temp)){
-        foreground.push_back(temp);
     }
-    Map.close();
-
+    
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
     //Randome Map Tile Genrator
-    
-    RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
-    RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Bush Spawn Rate
-    RandomeTerrain(2, 12, terrain, '3', 100 ,foreground); //Bush Spawn Rate
-
-
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
@@ -397,58 +397,102 @@ int main(void)
             
         }
         //----------------------------------------------------------------------------------
-        if (CheckCollisionPointRec(GetMousePosition(), next))
-        {
+        if ((CheckCollisionPointRec(GetMousePosition(), nextbutton))&&(screen == 2)){ // command of next button
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 turn ++;
                 ActionPoint = 8;
                 ClearForeground(foreground, animationlayer);
+                win = WinCondition(foreground);
+                if(win != -1){
+                    
+                    screen = 3;
+                }
             }
             
         }
-        
-        
+        if ((CheckCollisionPointRec(GetMousePosition(), startbutton))&&(screen != 2)){ // command of start button
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    //Making Foreground Map
+                foreground = {};
+                ifstream Map("foreground.txt");
+                string temp;       
+                while(std::getline(Map,temp)){
+                    foreground.push_back(temp);
+                }
+                Map.close();
+                
+                //Randomize the terrain
+                RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
+                RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Bush Spawn Rate
+                RandomeTerrain(2, 12, terrain, '3', 100 ,foreground); //Bush Spawn Rate
+                //Switch screen
+                screen = 2;
+            }   
+        }
+        if ((CheckCollisionPointRec(GetMousePosition(), exitbutton))&&(screen != 2)){ // command of exit button
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                
+                CloseWindow();
+            }
+            
+        }
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
             ClearBackground(BLACK);
-            
-            //Selected tile is being shown on the screen.
-            DrawSheet(selected.x, selected.y, 0, 10, background, foreground, sheet);
-            Description(foreground, selected);
-            
-            DrawRectangleRounded(next, 0.5, 25, WHITE); 
-            DrawText("PASS", next.x+60, next.y+10, 30, BLACK);
-            DrawText(TextFormat("Turn Number :- %i", turn), next.x-450, next.y+10, 30, WHITE);
-            DrawText(TextFormat("Action Points Left :- %i", ActionPoint), next.x-250, 50, 30, WHITE);
-            
-            if(turn%2 == 0){
-                DrawText("RED", next.x-700, next.y+10, 30, RED);
-            }else{
-                DrawText("BLUE", next.x-700, next.y+10, 30, BLUE);
+            if(screen == 1){
+                DrawRectangleRounded(startbutton, 0.5, 25, WHITE);
+                DrawText("START", startbutton.x+50, startbutton.y+10, 30, BLACK);
+                DrawRectangleRounded(exitbutton, 0.5, 25, WHITE);
+                DrawText("EXIT", exitbutton.x+65, exitbutton.y+10, 30, BLACK);
             }
-            
-            //Draw the Background and Foreground
-            for(int i=0; i < 14; i++ ){
-                for(int j=0; j < 16; j++){
-                    DrawSheet(i, j, 50, 100, background, foreground, sheet);
-                    
-                    if(animationlayer.at(i).at(j) == 1){
-                        DrawCircle((j*50)+100+25, (i*50)+100+25, 5, RED);
-                    }if(animationlayer.at(i).at(j) == 2){
-                        DrawCircle((j*50)+100+25, (i*50)+100+25, 5, BLUE);
-                    }
+            if(screen == 2){
+                //Selected tile is being shown on the screen.
+                DrawSheet(selected.x, selected.y, 0, 10, background, foreground, sheet);
+                Description(foreground, selected);
+                
+                DrawRectangleRounded(nextbutton, 0.5, 25, WHITE); 
+                DrawText("PASS", nextbutton.x+60, nextbutton.y+10, 30, BLACK);
+                DrawText(TextFormat("Turn Number :- %i", turn), nextbutton.x-450, nextbutton.y+10, 30, WHITE);
+                DrawText(TextFormat("Action Points Left :- %i", ActionPoint), nextbutton.x-250, 50, 30, WHITE);
+                
+                if(turn%2 == 0){
+                    DrawText("RED", nextbutton.x-700, nextbutton.y+10, 30, RED);
+                }else{
+                    DrawText("BLUE", nextbutton.x-700, nextbutton.y+10, 30, BLUE);
                 }
+                
+                //Draw the Background and Foreground
+                for(int i=0; i < 14; i++ ){
+                    for(int j=0; j < 16; j++){
+                        DrawSheet(i, j, 50, 100, background, foreground, sheet);
+                        
+                        if(animationlayer.at(i).at(j) == 1){
+                            DrawCircle((j*50)+100+25, (i*50)+100+25, 5, RED);
+                        }if(animationlayer.at(i).at(j) == 2){
+                            DrawCircle((j*50)+100+25, (i*50)+100+25, 5, BLUE);
+                        }
+                    }
 
+                }
             }
-            
+            if(screen == 3){
+                DrawRectangleRounded(startbutton, 0.5, 25, WHITE);
+                DrawText("RESTART", startbutton.x+30, startbutton.y+10, 30, BLACK);
+                DrawRectangleRounded(exitbutton, 0.5, 25, WHITE);
+                DrawText("EXIT", exitbutton.x+60, exitbutton.y+10, 30, BLACK);
+                if(win == 1){
+                    DrawText("RED WON THE GAME!!!", startbutton.x-70, startbutton.y-70, 30, RED);
+                }else{
+                    DrawText("BLUE WON THE GAME!!!", startbutton.x-70, startbutton.y-70, 30, BLUE);
+                }
+            }
 
 
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
-
     // De-Initialization
     //--------------------------------------------------------------------------------------
     // Unloading the Texture2D
@@ -464,8 +508,7 @@ int main(void)
     UnloadImage(Tank2); //foreground 7
     UnloadImage(Heart); //foreground 9
     UnloadImage(Soilder2Heart); //foreground 14
-    UnloadImage(SoilderHeart); //foreground 15
-    
+    UnloadImage(SoilderHeart); //foreground 15    
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
     return 0;
