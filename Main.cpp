@@ -8,8 +8,8 @@ void Description(vector<string> foreground,Vector2 selected);
 void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationlayer);
 void PlaceMovementIconsForeground(int x, int y, int size, const char current, vector<string> &foreground, vector<vector<int>> &animationlayer);
 void RandomeTerrain(int x, int y, int percentage, const char val, int max, vector<string> &foreground);
-bool IsPlayerRed(const char val);
-bool IsPlayerBlue(const char val);
+int IsPlayerRed(const char val);
+int IsPlayerBlue(const char val);
 bool IsHeart(const char val);
 bool IsObject(const char val);
 bool IsTank(const char val);
@@ -51,21 +51,21 @@ int WinCondition(vector<string> foreground){
     return -1;
 }
 
-bool IsPlayerRed(const char val){
+int IsPlayerRed(const char val){
     if(
         (val == '4')||
         (val == '6')||
         (val == 'r')
-    ){return true;}
-    else{return false;}
+    ){return 1;}
+    else{return 0;}
 }
-bool IsPlayerBlue(const char val){
+int IsPlayerBlue(const char val){
     if(
         (val == '5')||
         (val == '7')||
         (val == 'b')
-    ){return true;}
-    else{return false;}
+    ){return 1;}
+    else{return 0;}
 }   
 bool IsObject(const char val){
     if(
@@ -288,7 +288,7 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if((IsMouseButtonPressed(MOUSE_BUTTON_LEFT))&&(mouse)){
+        if((IsMouseButtonPressed(MOUSE_BUTTON_LEFT))){
             Vector2 temp = GetMousePosition();
             if(((temp.x-100)>0)&&((temp.y-100)>0)){
                 int sth = temp.x;
@@ -300,9 +300,12 @@ int main(void)
                     //cout << selected.x<< "-" << selected.y<< endl;
                 }
             }
-            int IsInRange = animationlayer.at(selected.x).at(selected.y);
-            const char current = foreground.at(selected.x).at(selected.y);
-            const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
+            
+        int IsInRange = animationlayer.at(selected.x).at(selected.y);
+        const char current = foreground.at(selected.x).at(selected.y);
+        const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
+        
+        if((ActionPoint > 0)&&((turn%2 != IsPlayerBlue(current))||(mouse))){ 
         //Movement of the Tiles 
         //--------------------------------------------------------------------------------- 
             if(IsInfantary(current)){ //infantary grid pattern
@@ -310,15 +313,13 @@ int main(void)
                 PlaceMovementIconsForeground(selected.x ,selected.y ,2 ,current ,foreground, animationlayer);
                 
             }else if(IsTank(current)){ //tank grid pattern
+
                 ClearForeground(foreground, animationlayer);
                 PlaceMovementIconsForeground(selected.x ,selected.y ,4 ,current ,foreground, animationlayer);
                 
-            }else if((IsObject(current))||(current == '0')){ // clear screen when click on ground
+            }else if(((current == '8')||(IsInRange == 2))&&(!IsObject(current))){ // move the selected peice to new location
+
                 ClearForeground(foreground, animationlayer);
-                
-            }else if(((current == '8')||(current == '9'))&&(!IsObject(current))){ // move the selected peice to new location
-                ClearForeground(foreground, animationlayer);
-                
                 if((current == '9')&&(previous == '5')){ // blue capture heart
                     ActionPoint --;
                     foreground.at(selected.x).at(selected.y) = 'b';
@@ -330,10 +331,15 @@ int main(void)
                     foreground.at(selectedprev.x).at(selectedprev.y) = '0';
                     
                 }else if((current == '8')){ //Normal Movements
+                    
                     ActionPoint --;
                     foreground.at(selected.x).at(selected.y) = foreground.at(selectedprev.x).at(selectedprev.y);
                     foreground.at(selectedprev.x).at(selectedprev.y) = '0';
                 }
+            }else if((IsObject(current))||(current == '0')||(current == '9')){ // clear screen when click on ground
+
+                ClearForeground(foreground, animationlayer);
+                
             }
         //--------Hit Detector
             if((IsPlayerRed(current) != IsPlayerRed(previous))&&(IsInRange == 1)&&(IsInfantary(current)&&(IsInfantary(previous)))){ // inf hits  inf
@@ -374,15 +380,21 @@ int main(void)
                 }
             }
         }
-        
+        cout << mouse << endl;
+        if(turn%2 != (IsPlayerBlue(current)&&!IsObject(current))){ mouse = true;}
+        else{ mouse = false;}
+        }
         //----------------------------------------------------------------------------------
         if (CheckCollisionPointRec(GetMousePosition(), next))
         {
             if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 turn ++;
                 ActionPoint = 8;
+                ClearForeground(foreground, animationlayer);
             }
+            
         }
+        
         // Draw
         //----------------------------------------------------------------------------------
         BeginDrawing();
@@ -398,7 +410,7 @@ int main(void)
             DrawText(TextFormat("Turn Number :- %i", turn), next.x-450, next.y+10, 30, WHITE);
             DrawText(TextFormat("Action Points Left :- %i", ActionPoint), next.x-250, 50, 30, WHITE);
             
-            if(turn%2 == 0){
+            if(turn%2 == 1){
                 DrawText("RED", next.x-700, next.y+10, 30, RED);
             }else{
                 DrawText("BLUE", next.x-700, next.y+10, 30, BLUE);
