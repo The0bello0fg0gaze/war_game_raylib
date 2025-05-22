@@ -8,14 +8,23 @@ void Description(vector<string> foreground,Vector2 selected);
 void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationlayer);
 void PlaceMovementIconsForeground(int x, int y, int size, const char current, vector<string> &foreground, vector<vector<int>> &animationlayer);
 void RandomeTerrain(int x, int y, int percentage, const char val, int max, vector<string> &foreground);
-int IsPlayerRed(const char val);
 int IsPlayerBlue(const char val);
 bool IsHeart(const char val);
 bool IsObject(const char val);
 bool IsTank(const char val);
 bool IsInfantary(const char val);
+bool CheckTurn(int turn, const char val);
+int IsPlayerRed(const char val);
 int WinCondition(vector<string> foreground);  
 
+bool CheckTurn(int turn, const char val){
+    bool player = turn%2;
+    if(player == 1){
+        return !IsPlayerRed(val);
+    }else{
+        return !IsPlayerBlue(val);
+    }
+}
 bool IsTank(const char val){
     if(
         (val == '6')||
@@ -181,7 +190,7 @@ int main(void)
 {   
     bool mouse = true;
     int ActionPoint = 8;
-    int turn = 0;   
+    int turn = 1;   
     int infantarydammageinfantary = 30;
     int infantarydammagetank = 10;
     int tankdammagetank = 40;
@@ -305,7 +314,7 @@ int main(void)
         const char current = foreground.at(selected.x).at(selected.y);
         const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
         
-        if((ActionPoint > 0)&&((turn%2 != IsPlayerBlue(current))||(mouse))){ 
+        if((ActionPoint > 0)&&(CheckTurn(turn, current))){ 
         //Movement of the Tiles 
         //--------------------------------------------------------------------------------- 
             if(IsInfantary(current)){ //infantary grid pattern
@@ -341,6 +350,7 @@ int main(void)
                 ClearForeground(foreground, animationlayer);
                 
             }
+        }
         //--------Hit Detector
             if((IsPlayerRed(current) != IsPlayerRed(previous))&&(IsInRange == 1)&&(IsInfantary(current)&&(IsInfantary(previous)))){ // inf hits  inf
                 ClearForeground(foreground, animationlayer);
@@ -379,10 +389,12 @@ int main(void)
                     }
                 }
             }
-        }
-        cout << mouse << endl;
-        if(turn%2 != (IsPlayerBlue(current)&&!IsObject(current))){ mouse = true;}
-        else{ mouse = false;}
+            if((IsObject(current))||(current == '0')||(current == '9')||(!CheckTurn(turn, current))){ // clear screen when click on ground
+
+                ClearForeground(foreground, animationlayer);
+                
+            }
+            
         }
         //----------------------------------------------------------------------------------
         if (CheckCollisionPointRec(GetMousePosition(), next))
@@ -394,6 +406,7 @@ int main(void)
             }
             
         }
+        
         
         // Draw
         //----------------------------------------------------------------------------------
@@ -410,7 +423,7 @@ int main(void)
             DrawText(TextFormat("Turn Number :- %i", turn), next.x-450, next.y+10, 30, WHITE);
             DrawText(TextFormat("Action Points Left :- %i", ActionPoint), next.x-250, 50, 30, WHITE);
             
-            if(turn%2 == 1){
+            if(turn%2 == 0){
                 DrawText("RED", next.x-700, next.y+10, 30, RED);
             }else{
                 DrawText("BLUE", next.x-700, next.y+10, 30, BLUE);
