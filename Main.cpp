@@ -8,15 +8,54 @@ void Description(vector<string> foreground,Vector2 selected);
 void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationlayer);
 void PlaceMovementIconsForeground(int x, int y, int size, const char current, vector<string> &foreground, vector<vector<int>> &animationlayer);
 void RandomeTerrain(int x, int y, int percentage, const char val, int max, vector<string> &foreground);
-int IsPlayerBlue(const char val);
+bool PathFinder(Vector2 current, Vector2 next, vector<string> foreground);
 bool IsHeart(const char val);
 bool IsObject(const char val);
 bool IsTank(const char val);
 bool IsInfantary(const char val);
 bool CheckTurn(int turn, const char val);
+bool InVector(Vector2 value, vector<Vector2> Vector);
+int IsPlayerBlue(const char val);
 int IsPlayerRed(const char val);
 int WinCondition(vector<string> foreground);  
 
+bool InVector(Vector2 value, vector<Vector2> Vector){
+    for(int x=0; x < int(Vector.size()); x++){
+        if((Vector.at(x).x == value.x)&&(Vector.at(x).y == value.y)){ return 1;}
+    }
+    return 0;
+}
+bool PathFinder(Vector2 current, Vector2 goal, int currentstep, int maxstep, vector<string> foreground, vector<Vector2> &Moved){ // more work nneded here also be care full when using Move it can cause memory problems if used improperly
+    currentstep ++;
+    if(((goal.x)>=0)&&((goal.y)>=0)&&((goal.x)<14)&&((goal.y)<16)){
+        
+        if((current.x == goal.x)&&(current.y == goal.y)&&(currentstep <= maxstep)){  
+            cout<<"/'1'";
+            return 1;
+        }
+        
+        else if( foreground.at(goal.x).at(goal.y) == '0' && currentstep <= maxstep && !InVector(current, Moved)){
+            
+            for(float i=current.x-1; i<=current.x+1; i++){
+                for(float j=current.y-1; j<=current.y+1; j++){
+                        bool found = PathFinder((Vector2){i, j}, goal, currentstep, maxstep, foreground, Moved);
+                        if (found && !InVector((Vector2){i, j}, Moved)) {
+                            cout<<"/'2'";
+                            return 1;
+                        }
+                        Moved.push_back((Vector2){i,j});
+                }
+            }
+            
+            cout<<"/'3'";
+            return 0;
+            
+        }
+    }
+    Moved.push_back(current);
+    cout<<"/'4'";
+    return 0;
+}
 bool CheckTurn(int turn, const char val){
     bool player = turn%2;
     if(player == 1){
@@ -107,10 +146,14 @@ void PlaceMovementIconsForeground(int x, int y, int size, const char current, ve
     y = y-size;
     for(int i=0; i <= size*2; i++ ){
             for(int j=0; j <= size*2; j++){
-                if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)){
+                vector<Vector2> Moved;
+                //PathFinder(Vector2 current, Vector2 goal, int currentstep, int maxstep, vector<string> foreground, vector<Vector2> &Moved)
+                bool found = PathFinder((Vector2){float(x+size),float(y+size)}, (Vector2){float(x+i),float(y+j)}, 0, size, foreground, Moved);
+                cout <<"/"<<y+size<<"-"<<x+size<<"/";
+                cout <<"/"<< y+j<<"-"<<x+i<<"/"<<found<<endl;
+                if((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16))&&(found)){
                     const char temp = foreground.at(x+i).at(y+j);
-                    
-                    if(((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(temp == '0')){
+                    if(temp == '0'){
                         foreground.at(x+i).at(y+j) = '8';
                         
                     }else if(((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(!IsObject(temp)))&&(IsPlayerRed(temp) != IsPlayerRed(current)))&&(temp != '9')){ //only paint enemy red
@@ -140,58 +183,57 @@ void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationl
 
 void DrawSheet(int i, int j , int multi, int add, vector<vector<int>> background, vector<string> foreground, vector<Texture2D> sheet){
     if(background.at(i).at(j) == 0){ // Background is being printed on screen
-        DrawTexture(sheet[0], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[0], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(background.at(i).at(j) == 1){
-        DrawTexture(sheet[1], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[1], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }
     
     if(foreground.at(i).at(j) == '1'){ // Foreground is being printed on screen
-        DrawTexture(sheet[2], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[2], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '2'){
-        DrawTexture(sheet[3], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[3], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '3'){ 
-        DrawTexture(sheet[4], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[4], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '4'){
-        DrawTexture(sheet[5], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[5], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '5'){
-        DrawTexture(sheet[6], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[6], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '6'){
-        DrawTexture(sheet[7], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[7], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '7'){
-        DrawTexture(sheet[8], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[8], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '8'){
-        DrawCircle((j*multi)+add+25, (i*multi)+add+25, 5, WHITE);
+        DrawCircle((j*multi)+add+25, (i*multi)+add+25, 5, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == '9'){
-        DrawTexture(sheet[9], (j*multi)+add, (i*multi)+add-15, WHITE);
+        DrawTexture(sheet[9], (j*multi)+add, (i*multi)+add-15, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == 'b'){
-        DrawTexture(sheet[10], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[10], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }else if(foreground.at(i).at(j) == 'r'){
-        DrawTexture(sheet[11], (j*multi)+add, (i*multi)+add, WHITE);
+        DrawTexture(sheet[11], (j*multi)+add, (i*multi)+add, (Color) {230,230,230,255});
     }
 }
 void Description(vector<string> foreground,Vector2 selected){ //prints the description of the tile selected
     if(foreground.at(selected.x).at(selected.y) == '0'){
-        DrawText("Grass - Nice to walk on", 75, 25, 20, WHITE);
+        DrawText("Grass - Nice to walk on", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '1'){
-        DrawText("Bush - Believe me you can't see through it", 75, 25, 20, WHITE);
+        DrawText("Bush - Believe me you can't see through it", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '2'){
-        DrawText("Rock - Verrry strong rock", 75, 25, 20, WHITE);
+        DrawText("Rock - Verrry strong rock", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '3'){
-        DrawText("Tree - A verry THICK tree", 75, 25, 20, WHITE);
+        DrawText("Tree - A verry THICK tree", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '4'){
-        DrawText("Soilder Red - An unfortunate blue soule", 75, 25, 20, WHITE);
+        DrawText("Soilder Red - An unfortunate blue soule", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '5'){
-        DrawText("Soilder Blue - An unfortunate red soule", 75, 25, 20, WHITE);
+        DrawText("Soilder Blue - An unfortunate red soule", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '6'){
-        DrawText("Tank Red - He likes it in there", 75, 25, 20, WHITE);
+        DrawText("Tank Red - He likes it in there", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '7'){
-        DrawText("Tank Blue - He dosen't like it in there", 75, 25, 20, WHITE);
+        DrawText("Tank Blue - He dosen't like it in there", 75, 25, 20, (Color) {230,230,230,255});
     }else if(foreground.at(selected.x).at(selected.y) == '9'){
-        DrawText("Capture all the hearts to win the game", 75, 25, 20, WHITE);
+        DrawText("Capture all the hearts to win the game", 75, 25, 20, (Color) {230,230,230,255});
     }
 }
-int main(void)
-{   
+int main(void){   
     int win = -1;
     int screen = 1;
     int ActionPoint = 8;
@@ -293,8 +335,8 @@ int main(void)
     //--------------------------------------------------------------------------------------
     //Randome Map Tile Genrator
     // Main game loop
-    while (!WindowShouldClose())    // Detect window close button or ESC key
-    {
+    while (!WindowShouldClose()){    // Detect window close button or ESC key
+    
         // Update
         //----------------------------------------------------------------------------------
         if((IsMouseButtonPressed(MOUSE_BUTTON_LEFT))){
@@ -423,8 +465,8 @@ int main(void)
                 
                 //Randomize the terrain
                 RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
-                RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Bush Spawn Rate
-                RandomeTerrain(2, 12, terrain, '3', 100 ,foreground); //Bush Spawn Rate
+                RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Rock Spawn Rate
+                RandomeTerrain(2, 12, terrain+10, '3', 100 ,foreground); //Tree Spawn Rate
                 //Switch screen
                 screen = 2;
             }   
@@ -440,11 +482,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         BeginDrawing();
 
-            ClearBackground(BLACK);
+            ClearBackground((Color){20,30,20,255});
             if(screen == 1){
-                DrawRectangleRounded(startbutton, 0.5, 25, WHITE);
+                DrawRectangleRounded(startbutton, 0.5, 25, (Color) {230,230,230,255});
                 DrawText("START", startbutton.x+50, startbutton.y+10, 30, BLACK);
-                DrawRectangleRounded(exitbutton, 0.5, 25, WHITE);
+                DrawRectangleRounded(exitbutton, 0.5, 25, (Color) {230,230,230,255});
                 DrawText("EXIT", exitbutton.x+65, exitbutton.y+10, 30, BLACK);
             }
             if(screen == 2){
@@ -452,10 +494,10 @@ int main(void)
                 DrawSheet(selected.x, selected.y, 0, 10, background, foreground, sheet);
                 Description(foreground, selected);
                 
-                DrawRectangleRounded(nextbutton, 0.5, 25, WHITE); 
+                DrawRectangleRounded(nextbutton, 0.5, 25, (Color) {230,230,230,255}); 
                 DrawText("PASS", nextbutton.x+60, nextbutton.y+10, 30, BLACK);
-                DrawText(TextFormat("Turn Number :- %i", turn), nextbutton.x-450, nextbutton.y+10, 30, WHITE);
-                DrawText(TextFormat("Action Points Left :- %i", ActionPoint), nextbutton.x-250, 50, 30, WHITE);
+                DrawText(TextFormat("Turn Number :- %i", turn), nextbutton.x-450, nextbutton.y+10, 30, (Color) {230,230,230,255});
+                DrawText(TextFormat("Action Points Left :- %i", ActionPoint), nextbutton.x-250, 50, 30, (Color) {230,230,230,255});
                 
                 if(turn%2 == 0){
                     DrawText("RED", nextbutton.x-700, nextbutton.y+10, 30, RED);
@@ -478,9 +520,9 @@ int main(void)
                 }
             }
             if(screen == 3){
-                DrawRectangleRounded(startbutton, 0.5, 25, WHITE);
+                DrawRectangleRounded(startbutton, 0.5, 25, (Color) {230,230,230,255});
                 DrawText("RESTART", startbutton.x+30, startbutton.y+10, 30, BLACK);
-                DrawRectangleRounded(exitbutton, 0.5, 25, WHITE);
+                DrawRectangleRounded(exitbutton, 0.5, 25, (Color) {230,230,230,255});
                 DrawText("EXIT", exitbutton.x+60, exitbutton.y+10, 30, BLACK);
                 if(win == 1){
                     DrawText("RED WON THE GAME!!!", startbutton.x-70, startbutton.y-70, 30, RED);
