@@ -26,33 +26,35 @@ bool InVector(Vector2 value, vector<Vector2> Vector){
     return 0;
 }
 bool PathFinder(Vector2 current, Vector2 goal, int currentstep, int maxstep, vector<string> foreground, vector<Vector2> &Moved){ // more work nneded here also be care full when using Move it can cause memory problems if used improperly
-    if(current.x>=0 && current.y >=0&& current.x<14 && current.y<16 ){
-    if( goal.x>=0 && goal.y >=0&& goal.x<14 && goal.y<16 && !IsObject(foreground.at(current.x).at(current.y)) ){
+    if( goal.x>=0 && goal.y >=0&& goal.x<14 && goal.y<16 && 
+        currentstep <= maxstep && 
+        current.x>=0 && current.y >=0&& current.x<14 && current.y<16 &&
+        !InVector(current, Moved)){
         
-        if( current.x == goal.x && current.y == goal.y && currentstep <= maxstep ){
-            Moved.push_back(current);
-            currentstep ++;            
+        const char currentchar = foreground.at(current.x).at(current.y);
+        Moved.push_back(current);  //current --> Moved
+        currentstep ++;
+        
+        if( current.x == goal.x && current.y == goal.y ){
             return 1;
         }
         
-        else if(!IsObject(foreground.at(goal.x).at(goal.y)) && currentstep <= maxstep && !InVector(current, Moved)){
-            currentstep ++;
-            for(float i=current.x-1; i<=current.x+1; i++){
-                for(float j=current.y-1; j<=current.y+1; j++){
-                        Moved.push_back((Vector2){i,j});
-                        bool found = PathFinder((Vector2){i, j}, goal, currentstep, maxstep, foreground, Moved);
+        else if(!IsObject(currentchar)){
+                    
+            for(int i=current.x-1; i<=current.x+1; i++){
+                for(int j=current.y-1; j<=current.y+1; j++){
+                        bool found = PathFinder((Vector2){i, j}, goal, currentstep, maxstep, foreground, Moved); 
                         if (found) {
                             return 1;
                         }
                         
                 }
             }
-            
             return 0;
             
         }
-    }}
-    return 0;
+        return 0;
+    }else {return 0;}
 }
 bool CheckTurn(int turn, const char val){
     bool player = turn%2;
@@ -147,15 +149,15 @@ void PlaceMovementIconsForeground(int x, int y, int size, const char current, ve
                 vector<Vector2> Moved = {};
                 //PathFinder(Vector2 current, Vector2 goal, int currentstep, int maxstep, vector<string> foreground, vector<Vector2> &Moved)
                 bool found = PathFinder((Vector2){float(x+size),float(y+size)}, (Vector2){float(x+i),float(y+j)}, 0, size, foreground, Moved);
-                if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 && found ){
+                if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 ){
                     const char temp = foreground.at(x+i).at(y+j);
-                    if(temp == '0'){
+                    if(temp == '0' && found ){
                         foreground.at(x+i).at(y+j) = '8';
                         
-                    }else if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 && !IsObject(temp) && IsPlayerRed(temp) != IsPlayerRed(current) && temp != '9' ){ //only paint enemy red
+                    }else if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 && !IsObject(temp) && IsPlayerRed(temp) != IsPlayerRed(current) && temp != '9'){ //only paint enemy red
                         animationlayer.at(x+i).at(y+j) = 1;
                         
-                    }else if(temp == '9'){ //paint heart blue
+                    }else if(temp == '9' && found ){ //paint heart blue
                         animationlayer.at(x+i).at(y+j) = 2;
                     }
                 }
@@ -340,7 +342,7 @@ int main(void){
             if(((temp.x-100)>0)&&((temp.y-100)>0)){
                 int sth = temp.x;
                 temp.x = (int(temp.y-100)/50);
-                temp.y = (int(sth-100)/50);
+                temp.y = (int(sth-100)/50);\
                 if((temp.x<14)&&(temp.x>=0)&&(temp.y<16)&&(temp.y>=0)){
                     selectedprev = selected;
                     selected =temp;
@@ -459,9 +461,9 @@ int main(void){
                 Map.close();
                 
                 //Randomize the terrain
-                //RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
-                //RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Rock Spawn Rate
-                //RandomeTerrain(2, 12, terrain+10, '3', 100 ,foreground); //Tree Spawn Rate
+                RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
+                RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Rock Spawn Rate
+                RandomeTerrain(2, 12, terrain+10, '3', 100 ,foreground); //Tree Spawn Rate
                 //Switch screen
                 screen = 2;
             }   
