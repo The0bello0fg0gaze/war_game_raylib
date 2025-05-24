@@ -6,6 +6,7 @@
 2. KILL ALL THE OPONNENTS TO WIN THE GAME OR 1                              |
 |
 3. CANNOT MOVE THROUGH OBSTICALS                                            |
+
 ******************************************************************************|
 The complete Game is within Main file all the Photos are present in (img) folder.
 
