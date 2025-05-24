@@ -1,8 +1,11 @@
 ******************************************************************************|
 | RULES                                                                       |
-| 1. COLLECT ALL THE FLAGS TO WIN THE GAME OR 2                               |
-| 2. KILL ALL THE OPONNENTS TO WIN THE GAME OR 1                              |
-| 3. CANNOT MOVE THROUGH OBSTICALS                                            |
+| 
+1. COLLECT ALL THE FLAGS TO WIN THE GAME OR 2                               |
+|
+2. KILL ALL THE OPONNENTS TO WIN THE GAME OR 1                              |
+|
+3. CANNOT MOVE THROUGH OBSTICALS                                            |
 ******************************************************************************|
 The complete Game is within Main file all the Photos are present in (img) folder.
 
