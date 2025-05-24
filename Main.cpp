@@ -8,7 +8,7 @@ void Description(vector<string> foreground,Vector2 selected);
 void ClearForeground(vector<string> &foreground, vector<vector<int>> &animationlayer);
 void PlaceMovementIconsForeground(int x, int y, int size, const char current, vector<string> &foreground, vector<vector<int>> &animationlayer);
 void RandomeTerrain(int x, int y, int percentage, const char val, int max, vector<string> &foreground);
-bool PathFinder(Vector2 current, Vector2 next, vector<string> foreground);
+bool PathFinder(Vector2 current, Vector2 goal, int currentstep, int maxstep, vector<string> foreground, vector<Vector2> &Moved);
 bool IsHeart(const char val);
 bool IsObject(const char val);
 bool IsTank(const char val);
@@ -26,34 +26,32 @@ bool InVector(Vector2 value, vector<Vector2> Vector){
     return 0;
 }
 bool PathFinder(Vector2 current, Vector2 goal, int currentstep, int maxstep, vector<string> foreground, vector<Vector2> &Moved){ // more work nneded here also be care full when using Move it can cause memory problems if used improperly
-    currentstep ++;
-    if(((goal.x)>=0)&&((goal.y)>=0)&&((goal.x)<14)&&((goal.y)<16)){
+    if(current.x>=0 && current.y >=0&& current.x<14 && current.y<16 ){
+    if( goal.x>=0 && goal.y >=0&& goal.x<14 && goal.y<16 && !IsObject(foreground.at(current.x).at(current.y)) ){
         
-        if((current.x == goal.x)&&(current.y == goal.y)&&(currentstep <= maxstep)){  
-            cout<<"/'1'";
+        if( current.x == goal.x && current.y == goal.y && currentstep <= maxstep ){
+            Moved.push_back(current);
+            currentstep ++;            
             return 1;
         }
         
-        else if( foreground.at(goal.x).at(goal.y) == '0' && currentstep <= maxstep && !InVector(current, Moved)){
-            
+        else if(!IsObject(foreground.at(goal.x).at(goal.y)) && currentstep <= maxstep && !InVector(current, Moved)){
+            currentstep ++;
             for(float i=current.x-1; i<=current.x+1; i++){
                 for(float j=current.y-1; j<=current.y+1; j++){
+                        Moved.push_back((Vector2){i,j});
                         bool found = PathFinder((Vector2){i, j}, goal, currentstep, maxstep, foreground, Moved);
-                        if (found && !InVector((Vector2){i, j}, Moved)) {
-                            cout<<"/'2'";
+                        if (found) {
                             return 1;
                         }
-                        Moved.push_back((Vector2){i,j});
+                        
                 }
             }
             
-            cout<<"/'3'";
             return 0;
             
         }
-    }
-    Moved.push_back(current);
-    cout<<"/'4'";
+    }}
     return 0;
 }
 bool CheckTurn(int turn, const char val){
@@ -146,17 +144,15 @@ void PlaceMovementIconsForeground(int x, int y, int size, const char current, ve
     y = y-size;
     for(int i=0; i <= size*2; i++ ){
             for(int j=0; j <= size*2; j++){
-                vector<Vector2> Moved;
+                vector<Vector2> Moved = {};
                 //PathFinder(Vector2 current, Vector2 goal, int currentstep, int maxstep, vector<string> foreground, vector<Vector2> &Moved)
                 bool found = PathFinder((Vector2){float(x+size),float(y+size)}, (Vector2){float(x+i),float(y+j)}, 0, size, foreground, Moved);
-                cout <<"/"<<y+size<<"-"<<x+size<<"/";
-                cout <<"/"<< y+j<<"-"<<x+i<<"/"<<found<<endl;
-                if((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16))&&(found)){
+                if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 && found ){
                     const char temp = foreground.at(x+i).at(y+j);
                     if(temp == '0'){
                         foreground.at(x+i).at(y+j) = '8';
                         
-                    }else if(((((x+i)>=0)&&((y+j)>=0)&&((x+i)<14)&&((y+j)<16)&&(!IsObject(temp)))&&(IsPlayerRed(temp) != IsPlayerRed(current)))&&(temp != '9')){ //only paint enemy red
+                    }else if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 && !IsObject(temp) && IsPlayerRed(temp) != IsPlayerRed(current) && temp != '9' ){ //only paint enemy red
                         animationlayer.at(x+i).at(y+j) = 1;
                         
                     }else if(temp == '9'){ //paint heart blue
@@ -355,9 +351,8 @@ int main(void){
         int IsInRange = animationlayer.at(selected.x).at(selected.y);
         const char current = foreground.at(selected.x).at(selected.y);
         const char previous = foreground.at(selectedprev.x).at(selectedprev.y);
-        
-        if((ActionPoint > 0)&&(CheckTurn(turn, current))){ 
-        //Movement of the Tiles 
+        //--------Movement of the Tiles 
+        if((ActionPoint > 0)&&(CheckTurn(turn, current))){  
         //--------------------------------------------------------------------------------- 
             if(IsInfantary(current)){ //infantary grid pattern
                 ClearForeground(foreground, animationlayer);
@@ -464,9 +459,9 @@ int main(void){
                 Map.close();
                 
                 //Randomize the terrain
-                RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
-                RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Rock Spawn Rate
-                RandomeTerrain(2, 12, terrain+10, '3', 100 ,foreground); //Tree Spawn Rate
+                //RandomeTerrain(2, 12, terrain, '1', 100 ,foreground); //Bush Spawn Rate
+                //RandomeTerrain(2, 12, terrain, '2', 100 ,foreground); //Rock Spawn Rate
+                //RandomeTerrain(2, 12, terrain+10, '3', 100 ,foreground); //Tree Spawn Rate
                 //Switch screen
                 screen = 2;
             }   
