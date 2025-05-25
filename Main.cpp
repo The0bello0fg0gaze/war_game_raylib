@@ -154,7 +154,7 @@ void PlaceMovementIconsForeground(int x, int y, int size, const char current, ve
                     if(temp == '0' && found ){
                         foreground.at(x+i).at(y+j) = '8';
                         
-                    }else if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 && !IsObject(temp) && IsPlayerRed(temp) != IsPlayerRed(current) && temp != '9'){ //only paint enemy red
+                    }else if( x+i>=0 && y+j>=0 && x+i<14 && y+j<16 && !IsObject(temp) && IsPlayerRed(temp) != IsPlayerRed(current) && temp != '9' && temp != '0'){ //only paint enemy red
                         animationlayer.at(x+i).at(y+j) = 1;
                         
                     }else if(temp == '9' && found ){ //paint heart blue
@@ -254,56 +254,59 @@ int main(void){
     Rectangle exitbutton = {400,500,200,50};
     
     InitWindow(screenWidth, screenHeight, "War-Game");
-    
+    InitAudioDevice();
     // Initialization
     //--------------------------------------------------------------------------------------
-    Image Grass1 = LoadImage("img/BigGrass.png");    //0
+    Image Grass1 = LoadImage("resources/BigGrass.png");    //0
     Texture2D grass1 = LoadTextureFromImage(Grass1);
     sheet.push_back(grass1);
     
-    Image Grass2 = LoadImage("img/SmlGrass.png");   //1
+    Image Grass2 = LoadImage("resources/SmlGrass.png");   //1
     Texture2D grass2 = LoadTextureFromImage(Grass2);
     sheet.push_back(grass2);
     
-    Image Bush = LoadImage("img/Bush.png");         //2
+    Image Bush = LoadImage("resources/Bush.png");         //2
     Texture2D bush = LoadTextureFromImage(Bush);
     sheet.push_back(bush);
     
-    Image Rock = LoadImage("img/Rock.png");        //3
+    Image Rock = LoadImage("resources/Rock.png");        //3
     Texture2D rock = LoadTextureFromImage(Rock);
     sheet.push_back(rock);
     
-    Image Tree = LoadImage("img/Tree.png");        //4
+    Image Tree = LoadImage("resources/Tree.png");        //4
     Texture2D tree = LoadTextureFromImage(Tree);
     sheet.push_back(tree);
     
-    Image Soilder1 = LoadImage("img/Soilder.png"); //5
+    Image Soilder1 = LoadImage("resources/Soilder.png"); //5
     Texture2D soilder1 = LoadTextureFromImage(Soilder1);
     sheet.push_back(soilder1);
     
-    Image Soilder2 = LoadImage("img/Soilder2.png");//6
+    Image Soilder2 = LoadImage("resources/Soilder2.png");//6
     Texture2D soilder2 = LoadTextureFromImage(Soilder2);
     sheet.push_back(soilder2);
     
-    Image Tank1 = LoadImage("img/Tank.png");       //7
+    Image Tank1 = LoadImage("resources/Tank.png");       //7
     Texture2D tank1 = LoadTextureFromImage(Tank1);
     sheet.push_back(tank1);
     
-    Image Tank2 = LoadImage("img/Tank2.png");     //8
+    Image Tank2 = LoadImage("resources/Tank2.png");     //8
     Texture2D tank2 = LoadTextureFromImage(Tank2);
     sheet.push_back(tank2);
     
-    Image Heart = LoadImage("img/Heart.png");     //9
+    Image Heart = LoadImage("resources/Heart.png");     //9
     Texture2D heart = LoadTextureFromImage(Heart);
     sheet.push_back(heart);
     
-    Image Soilder2Heart = LoadImage("img/Soilder2heart.png");     //10
+    Image Soilder2Heart = LoadImage("resources/Soilder2heart.png");     //10
     Texture2D blueheart = LoadTextureFromImage(Soilder2Heart);
     sheet.push_back(blueheart);
     
-    Image SoilderHeart = LoadImage("img/Soilderheart.png");     //11
+    Image SoilderHeart = LoadImage("resources/Soilderheart.png");     //11
     Texture2D redheart = LoadTextureFromImage(SoilderHeart);
     sheet.push_back(redheart);
+    
+    Music bgmusic = LoadMusicStream("resources/background_music.mp3");
+    Music click = LoadMusicStream("resources/click.mp3");
     
     //Making Foreground Map
                 ifstream Map("foreground.txt");
@@ -328,16 +331,22 @@ int main(void){
             }
         background.push_back(temp);
     }
-    
+    SetMusicVolume(bgmusic, 1);
+    PlayMusicStream(bgmusic);
     SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
     //Randome Map Tile Genrator
     // Main game loop
-    while (!WindowShouldClose()){    // Detect window close button or ESC key
-    
+    while (!WindowShouldClose()){        // Detect window close button or ESC key
+        UpdateMusicStream(bgmusic);
+        UpdateMusicStream(click);
+        if(GetMusicTimePlayed(click) > 0.4){
+            StopMusicStream(click);
+        }
         // Update
         //----------------------------------------------------------------------------------
         if((IsMouseButtonPressed(MOUSE_BUTTON_LEFT))){
+            PlayMusicStream(click);
             Vector2 temp = GetMousePosition();
             if(((temp.x-100)>0)&&((temp.y-100)>0)){
                 int sth = temp.x;
@@ -532,6 +541,7 @@ int main(void){
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
+    UnloadMusicStream(bgmusic);
     // De-Initialization
     //--------------------------------------------------------------------------------------
     // Unloading the Texture2D
